@@ -1,0 +1,77 @@
+# =============================================================================
+# 智能文档问答 Agent — 全局配置文件
+# =============================================================================
+
+# --- PDF 解析 ---
+parser:
+  # Tesseract 可执行文件路径 (Windows)
+  tesseract_exe: "C:/Program Files/Tesseract-OCR/tesseract.exe"
+  # OCR 语言: chi_sim=中文简体, eng=英文
+  ocr_lang: "chi_sim+eng"
+  # OCR 置信度阈值: 低于此值的文本块标记为 LOW_CONFIDENCE
+  ocr_confidence_threshold: 60
+  # DPI for page image rendering
+  render_dpi: 300
+  # 图像预处理: 是否启用自适应阈值
+  preprocess_adaptive_threshold: true
+  # 表格检测: 使用 pdfplumber 提取表格
+  table_extraction_enabled: true
+
+# --- 文档切片 ---
+chunking:
+  # 每个切片最大字符数
+  chunk_size: 500
+  # 相邻切片重叠字符数
+  chunk_overlap: 100
+  # 切片时保留的上下文: page_number, section_title
+  metadata_fields: ["page", "source_type", "confidence"]
+
+# --- 检索策略 ---
+retrieval:
+  # 方案: BM25 关键词检索 + DeepSeek 语义重排序
+  # 优势: 无需下载本地模型，复用 LLM 推理能力
+  strategy: "bm25+deepseek_rerank"
+  # 检索时返回的 top-K 候选数
+  retrieval_k: 5
+  # 混合检索权重: semantic=DeepSeek重排序分数, bm25=关键词分数
+  hybrid_alpha: 0.6
+
+# --- LLM (DeepSeek) ---
+llm:
+  api_base: "https://api.deepseek.com"
+  # 使用 cheaper 的 chat 模型
+  model: "deepseek-chat"
+  # 最大生成 token 数
+  max_tokens: 1024
+  # 温度 (0=确定性)
+  temperature: 0.1
+  # 超时时间 (秒)
+  timeout: 60
+
+# --- Agent ---
+agent:
+  # 置信度阈值: 低于此值触发 LOW_CONFIDENCE 标记
+  confidence_threshold: 0.5
+  # 是否启用自校验
+  enable_self_check: true
+  # 是否启用拒答 (无依据时)
+  enable_refusal: true
+  # 系统提示词模板
+  system_prompt: |
+    你是一个专业的保险文档问答助手。请根据提供的文档片段回答问题。
+    要求：
+    1. 只能根据提供的文档内容回答，不得编造信息
+    2. 如果文档中没有相关信息，明确回复"根据现有文档，无法找到相关依据"
+    3. 回答时引用具体的来源（页码、条款编号）
+    4. 对于表格数据，保持原始表格结构
+    5. 标注答案置信度：高（有明确原文支持）/ 中（有部分原文支持）/ 低（推断或猜测）
+
+# --- API ---
+api:
+  host: "0.0.0.0"
+  port: 8000
+
+# --- Streamlit ---
+ui:
+  host: "0.0.0.0"
+  port: 8501
